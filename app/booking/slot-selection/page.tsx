@@ -243,15 +243,16 @@ export default function SlotSelectionPage() {
               {/* Calendar Section */}
               <div className="mb-4">
                 <div className="calendar-container">
-                  <Calendar
-                    onChange={handleDateChange}
-                    value={date}
-                    tileContent={tileContent}
-                    tileClassName={tileClassName}
-                    tileDisabled={tileDisabled}
-                    minDate={today}
-                    className="w-full border rounded-lg"
-                  />
+                    <Calendar
+                      onChange={handleDateChange}
+                      value={date}
+                      tileContent={tileContent}
+                      tileClassName={tileClassName}
+                      tileDisabled={tileDisabled}
+                      minDate={today}
+                      showNeighboringMonth={false}
+                      className="w-full border rounded-lg"
+                    />
                 </div>
                 {/* Enhanced Legend */}
                 <div className="calendar-legend">

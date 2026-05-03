@@ -34,7 +34,7 @@ export default function BookingConfirmationPage() {
   const slotLabels = getSlotArray(slot, 'selectedSlotLabels', 'selectedSlotLabel');
   const slotPrices = getSlotArray<number>(slot, 'selectedSlotPrices', 'selectedSlotPrice');
   const timeSlotLabel = slotLabels.length ? slotLabels.join(', ') : '-';
-  
+
   // Base sum of slot prices
   const baseTotal = slotPrices.length ? slotPrices.reduce((sum: number, p: number) => sum + (Number(p) || 0), 0) : 0;
   // Final total including night charges if selected
@@ -44,7 +44,7 @@ export default function BookingConfirmationPage() {
 
   const handleShareImage = async () => {
     if (!detailsRef.current) return;
-    
+
     // Create a temporary div for sharing with better styling
     const tempDiv = document.createElement('div');
     tempDiv.className = 'html2canvas-reset bg-white rounded-xl shadow-lg p-8 w-96 flex flex-col items-center';
@@ -57,7 +57,7 @@ export default function BookingConfirmationPage() {
       color: black !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     `;
-    
+
     // Clone the content and replace Next.js Image with regular img
     const contentClone = detailsRef.current.cloneNode(true) as HTMLElement;
     const nextImage = contentClone.querySelector('img[src*="check.png"]');
@@ -68,27 +68,27 @@ export default function BookingConfirmationPage() {
       regularImg.style.cssText = 'width: 64px; height: 64px; margin-bottom: 1rem; display: block;';
       nextImage.parentNode?.replaceChild(regularImg, nextImage);
     }
-    
+
     tempDiv.innerHTML = contentClone.innerHTML;
     document.body.appendChild(tempDiv);
-    
+
     try {
-      const canvas = await html2canvas(tempDiv, { 
+      const canvas = await html2canvas(tempDiv, {
         backgroundColor: "#ffffff",
         scale: 2,
         useCORS: true,
         allowTaint: true,
-  // (Removed duplicate declarations of slotLabels, slotPrices, timeSlotLabel, totalAmount)
+        // (Removed duplicate declarations of slotLabels, slotPrices, timeSlotLabel, totalAmount)
         logging: false,
         width: 384, // w-96 = 24rem = 384px
         height: tempDiv.scrollHeight
       });
-      
+
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/png", 0.95));
       if (!blob) return;
-      
+
       const file = new File([blob], "booking-confirmation.png", { type: "image/png" });
-      
+
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -165,21 +165,21 @@ export default function BookingConfirmationPage() {
           <div className="text-black font-medium">{personal.address || '-'}</div>
           <div className="text-gray-600">Phone 1</div>
           <div className="text-black font-medium">{personal.phone1 || '-'}</div>
-         
-       
+
+
           <div className="text-gray-600">Date</div>
           <div className="text-black font-medium">{slot.date ? formatDateDMY(slot.date as string) : '-'}</div>
           <div className="text-gray-600">Time Slot</div>
           <div className="text-black font-medium">{timeSlotLabel}</div>
-          <div className="text-gray-600">Received Amount</div>
-          <div className="text-black font-medium">{payment.paymentType === 'advance' ? `₹${payment.advanceAmount || '-'}` : payment.paymentType === 'full' ? 'Full Payment' : '-'}</div>
           <div className="text-gray-600">Total Amount</div>
           <div className="text-black font-medium">₹{totalAmount ? totalAmount.toLocaleString() : '-'}</div>
+          <div className="text-gray-600">Received Amount</div>
+          <div className="text-black font-medium">{payment.paymentType === 'advance' ? `₹${payment.advanceAmount || '-'}` : payment.paymentType === 'full' ? 'Full Payment' : '-'}</div>
           <div className="text-gray-600">Balance Amount</div>
           <div className="text-black font-medium">₹{typeof totalAmount === 'number' && payment.advanceAmount ? (totalAmount - (parseFloat(payment.advanceAmount) || 0)).toLocaleString() : '0'}</div>
         </div>
       </div>
-     
+
       <button
         onClick={handleShareImage}
         className="w-full max-w-md bg-gray-50 text-blue-700 font-medium py-3 rounded-lg flex items-center justify-center gap-2 mb-3 border border-gray-200 hover:bg-gray-100 transition"

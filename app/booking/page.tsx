@@ -599,6 +599,7 @@ export default function BookingPage() {
                       tileClassName={tileClassName}
                       tileDisabled={tileDisabled}
                       minDate={today}
+                      showNeighboringMonth={false}
                       locale="en-US"
                       className="w-full border rounded-lg"
                     />
