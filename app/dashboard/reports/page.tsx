@@ -213,15 +213,15 @@ export default function ReportsPage() {
                 <div class="label">Total Bookings</div>
               </div>
               <div class="summary-item">
-                <div class="value">₹${(data.summary.total_revenue || 0).toLocaleString()}</div>
+                <div class="value">₹${(Number(data.summary.total_revenue) || 0).toLocaleString()}</div>
                 <div class="label">Total Revenue</div>
               </div>
               <div class="summary-item">
-                <div class="value">₹${(data.summary.total_advance || 0).toLocaleString()}</div>
+                <div class="value">₹${(Number(data.summary.total_advance) || 0).toLocaleString()}</div>
                 <div class="label">Total Advance</div>
               </div>
               <div class="summary-item">
-                <div class="value">₹${((data.summary.total_revenue || 0) - (data.summary.total_advance || 0)).toLocaleString()}</div>
+                <div class="value">₹${((Number(data.summary.total_revenue) || 0) - (Number(data.summary.total_advance) || 0)).toLocaleString()}</div>
                 <div class="label">Total Balance</div>
               </div>
             </div>
@@ -546,7 +546,7 @@ export default function ReportsPage() {
               <span className="text-xs font-bold uppercase tracking-wider opacity-60">Revenue</span>
             </div>
             <div className="text-gray-100 text-sm font-medium mb-1">Total Revenue</div>
-            <div className="text-3xl font-bold">₹{(data.summary.total_revenue || 0).toLocaleString()}</div>
+            <div className="text-3xl font-bold">₹{(Number(data.summary.total_revenue) || 0).toLocaleString()}</div>
           </div>
 
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-5 text-white shadow-lg shadow-amber-100 ring-1 ring-amber-500/10">
@@ -557,7 +557,7 @@ export default function ReportsPage() {
               <span className="text-xs font-bold uppercase tracking-wider opacity-60">Paid</span>
             </div>
             <div className="text-gray-100 text-sm font-medium mb-1">Total Advance</div>
-            <div className="text-3xl font-bold">₹{(data.summary.total_advance || 0).toLocaleString()}</div>
+            <div className="text-3xl font-bold">₹{(Number(data.summary.total_advance) || 0).toLocaleString()}</div>
           </div>
 
           <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white shadow-lg shadow-purple-100 ring-1 ring-purple-500/10">
@@ -568,7 +568,7 @@ export default function ReportsPage() {
               <span className="text-xs font-bold uppercase tracking-wider opacity-60">Due</span>
             </div>
             <div className="text-gray-100 text-sm font-medium mb-1">Total Balance</div>
-            <div className="text-3xl font-bold">₹{((data.summary.total_revenue || 0) - (data.summary.total_advance || 0)).toLocaleString()}</div>
+            <div className="text-3xl font-bold">₹{((Number(data.summary.total_revenue) || 0) - (Number(data.summary.total_advance) || 0)).toLocaleString()}</div>
           </div>
         </div>
       )}
