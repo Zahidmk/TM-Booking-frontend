@@ -208,7 +208,6 @@ export default function BookingPage() {
   const [advanceAmount, setAdvanceAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState<'bank' | 'cash' | 'upi'>('bank');
 
-  const today = new Date();
   // Calculate total slot price dynamically based on selected slots
   const slotPrice = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
   const minAdvance = 1;
@@ -308,12 +307,14 @@ export default function BookingPage() {
     return classes.join(' ');
   };
 
-  // Disable only past dates, allow booked dates to be selectable
+  // Disable past dates without bookings, allow past dates with bookings to be selectable to view details
   const tileDisabled = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      return date < today;
+      const dateString = formatDateForComparison(date);
+      const bookings = getBookingsByDate(dateString);
+      return date < today && bookings.length === 0;
     }
     return false;
   };
@@ -598,7 +599,6 @@ export default function BookingPage() {
                       tileContent={tileContent}
                       tileClassName={tileClassName}
                       tileDisabled={tileDisabled}
-                      minDate={today}
                       showNeighboringMonth={false}
                       locale="en-US"
                       className="w-full border rounded-lg"
@@ -934,7 +934,6 @@ export default function BookingPage() {
                       })()}
                       tileClassName={tileClassName}
                       tileDisabled={tileDisabled}
-                      minDate={today}
                       locale="en-US"
                       className="w-full"
                     />

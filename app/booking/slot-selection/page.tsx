@@ -51,7 +51,6 @@ export default function SlotSelectionPage() {
   const router = useRouter();
 
   const timeSlots = fullDaySlots;
-  const today = new Date();
 
   // Get all bookings for a date
   const getDateBookings = (date: Date) => {
@@ -105,14 +104,14 @@ export default function SlotSelectionPage() {
 
   // Modal state for booking details
   const [showBookingModal, setShowBookingModal] = useState(false);
-  // Disable only past dates, allow booked dates to be selectable
+  // Disable past dates without bookings, allow past dates with bookings to be selectable
   const tileDisabled = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      // Only disable past dates, allow booked dates to be selectable
-      return date < today;
+      const dateString = formatDateForComparison(date);
+      const bookings = getBookingsByDate(dateString);
+      return date < today && bookings.length === 0;
     }
     return false;
   };
@@ -249,7 +248,6 @@ export default function SlotSelectionPage() {
                       tileContent={tileContent}
                       tileClassName={tileClassName}
                       tileDisabled={tileDisabled}
-                      minDate={today}
                       showNeighboringMonth={false}
                       className="w-full border rounded-lg"
                     />
