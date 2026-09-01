@@ -22,6 +22,7 @@ export interface Booking {
   paymentType: 'advance' | 'full';
   advanceAmount?: string;
   paymentMode: 'bank' | 'cash' | 'upi';
+  night?: string;
   createdAt: string;
   updatedAt: string;
 }

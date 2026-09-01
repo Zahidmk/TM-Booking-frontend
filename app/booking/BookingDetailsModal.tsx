@@ -30,6 +30,7 @@ export interface BookingDetails {
   groom_name?: string;
   bride_name?: string;
   address?: string;
+  night?: string;
 }
 
 interface BookingDetailsModalProps {

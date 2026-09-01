@@ -69,6 +69,15 @@ export default function BookingsPage() {
   const [editUtensil, setEditUtensil] = useState('');
   const [editFinalPayment, setEditFinalPayment] = useState('');
   const [editRemarks, setEditRemarks] = useState('');
+  const [editNight, setEditNight] = useState<'Yes' | 'No'>('No');
+
+  // Check if Night option is already booked by another event on the same date
+  const isNightTakenOnDate = editingBooking ? bookings.some(b => 
+    String(b.id) !== String(editingBooking.id) &&
+    b.date && editingBooking.date &&
+    String(b.date).slice(0, 10) === String(editingBooking.date).slice(0, 10) &&
+    (b.night === 'Yes' || b.night === 'yes')
+  ) : false;
   
   // Filters
   const [fromDate, setFromDate] = useState('');
@@ -126,6 +135,7 @@ export default function BookingsPage() {
       setEditUtensil(editingBooking.utensil || '');
       setEditFinalPayment(editingBooking.final_payment || '');
       setEditRemarks(cleanRemarks(editingBooking.remarks, editingBooking.details, editingBooking.notes));
+      setEditNight(editingBooking.night === 'Yes' || editingBooking.night === 'yes' ? 'Yes' : 'No');
     }
   }, [editModalOpen, editingBooking]);
 
@@ -146,6 +156,7 @@ export default function BookingsPage() {
       utensil: editUtensil,
       final_payment: editFinalPayment,
       remarks: editRemarks,
+      night: editNight,
     };
     
     try {
@@ -485,6 +496,24 @@ export default function BookingsPage() {
                   <option value="">Select</option>
                   <option value="Yes">Yes</option>
                   <option value="No">No</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Night Option
+                  {isNightTakenOnDate && (
+                    <span className="ml-1 text-xs text-amber-600 font-semibold">(Booked on date)</span>
+                  )}
+                </label>
+                <select
+                  value={editNight}
+                  onChange={e => setEditNight(e.target.value as 'Yes' | 'No')}
+                  className="w-full border rounded-lg px-3 py-2 border-gray-300 text-gray-900"
+                >
+                  <option value="No">No</option>
+                  <option value="Yes" disabled={isNightTakenOnDate && editNight !== 'Yes'}>
+                    Yes {isNightTakenOnDate && editNight !== 'Yes' ? '(Unavailable)' : ''}
+                  </option>
                 </select>
               </div>
               <div>

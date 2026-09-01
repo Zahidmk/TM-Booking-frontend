@@ -704,6 +704,7 @@ export default function BookingPage() {
                     const mode = ((details.payment_mode || details.paymentMode) as string || '').toLowerCase();
                     return (['bank', 'cash', 'upi'].includes(mode) ? mode : 'cash') as 'bank' | 'cash' | 'upi';
                   })(),
+                  night: details.night || 'No',
                   price: parseFloat(String(details.total_amount || details.price || 0)) || 0,
                   notes: details.remarks || details.details || details.notes || '',
                   createdAt: '',
@@ -819,6 +820,7 @@ export default function BookingPage() {
                 bride_name: editingBooking.brideName,
                 address: editingBooking.address,
                 payment_type: editingBooking.paymentType,
+                night: editingBooking.night || 'No',
               };
               try {
                 const token = getToken();
@@ -954,29 +956,72 @@ export default function BookingPage() {
                   </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-black mb-2">Slot</label>
-                <select value={editingBooking.timeSlot || ''} onChange={e => {
-                  const newSlot = e.target.value;
-                  // Check if the new slot is already booked on the current date
-                  const existingBookingsOnDate = getBookingsByDate(editingBooking.date);
-                  const slotConflict = existingBookingsOnDate.some((b) => {
-                    if (String(b.id) === String(editingBooking.id)) return false;
-                    const bookedSlot = timeSlots.find(s => s.label === b.timeSlot || s.time === b.slotTime);
-                    return bookedSlot && bookedSlot.label === newSlot;
-                  });
-                  if (slotConflict) {
-                    setSubmitError(`${newSlot} is already booked on ${editingBooking.date}.`);
-                  } else {
-                    setSubmitError(null);
-                  }
-                  setEditingBooking({ ...editingBooking, timeSlot: newSlot });
-                }} className="border rounded px-3 py-2 w-full text-black bg-white">
-                  <option value="" disabled>Select Slot</option>
-                  {timeSlots.map(slot => (
-                    <option key={slot.id} value={slot.label}>{slot.label}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Slot</label>
+                  <select value={editingBooking.timeSlot || ''} onChange={e => {
+                    const newSlot = e.target.value;
+                    // Check if the new slot is already booked on the current date
+                    const existingBookingsOnDate = getBookingsByDate(editingBooking.date);
+                    const slotConflict = existingBookingsOnDate.some((b) => {
+                      if (String(b.id) === String(editingBooking.id)) return false;
+                      const bookedSlot = timeSlots.find(s => s.label === b.timeSlot || s.time === b.slotTime);
+                      return bookedSlot && bookedSlot.label === newSlot;
+                    });
+                    if (slotConflict) {
+                      setSubmitError(`${newSlot} is already booked on ${editingBooking.date}.`);
+                    } else {
+                      setSubmitError(null);
+                    }
+                    setEditingBooking({ ...editingBooking, timeSlot: newSlot });
+                  }} className="border rounded px-3 py-2 w-full text-black bg-white">
+                    <option value="" disabled>Select Slot</option>
+                    {timeSlots.map(slot => (
+                      <option key={slot.id} value={slot.label}>{slot.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">
+                    Night Option
+                    {(() => {
+                      const isNightTakenOnEditDate = getBookingsByDate(editingBooking.date).some(
+                        b => String(b.id) !== String(editingBooking.id) && (b.night === 'Yes' || b.night === 'yes')
+                      );
+                      return isNightTakenOnEditDate ? (
+                        <span className="ml-2 text-xs text-amber-600 font-semibold">(Already Booked on this date)</span>
+                      ) : null;
+                    })()}
+                  </label>
+                  <select
+                    value={editingBooking.night === 'Yes' || editingBooking.night === 'yes' ? 'Yes' : 'No'}
+                    onChange={e => {
+                      const selectedNight = e.target.value;
+                      const isNightTakenOnEditDate = getBookingsByDate(editingBooking.date).some(
+                        b => String(b.id) !== String(editingBooking.id) && (b.night === 'Yes' || b.night === 'yes')
+                      );
+                      if (selectedNight === 'Yes' && isNightTakenOnEditDate) {
+                        setSubmitError(`Night option is already booked for another event on ${editingBooking.date}.`);
+                      } else {
+                        setSubmitError(null);
+                      }
+                      setEditingBooking({ ...editingBooking, night: selectedNight });
+                    }}
+                    className="border rounded px-3 py-2 w-full text-black bg-white"
+                  >
+                    <option value="No">No</option>
+                    <option
+                      value="Yes"
+                      disabled={(() => {
+                        return getBookingsByDate(editingBooking.date).some(
+                          b => String(b.id) !== String(editingBooking.id) && (b.night === 'Yes' || b.night === 'yes')
+                        );
+                      })()}
+                    >
+                      Yes {getBookingsByDate(editingBooking.date).some(b => String(b.id) !== String(editingBooking.id) && (b.night === 'Yes' || b.night === 'yes')) ? '(Unavailable)' : ''}
+                    </option>
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-black mb-2">Remarks</label>
