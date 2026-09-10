@@ -2,18 +2,43 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getToken } from "@/lib/auth";
 import { formatDateDMY } from "@/lib/date";
-import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiTrendingUp, FiPieChart, FiBarChart2, FiTrash2 } from "react-icons/fi";
+import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiTrendingUp, FiPieChart, FiBarChart2, FiTrash2, FiX } from "react-icons/fi";
 import { deleteBooking } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Strip backend-prepended "Booked on DD/MM/YYYY" prefix from remarks
 // Strip backend-prepended "Booked on DD/MM/YYYY" prefix from remarks
 // Accepts primary + optional fallback fields (deleted bookings/bookings may use 'details' or 'notes' instead of 'remarks')
 const cleanRemarks = (remarks?: string, details?: string, notes?: string): string => {
   const raw = remarks || details || notes || '';
   if (!raw) return '';
   return raw.replace(/^Booked on[^\n]*\n?/i, '').trim();
+};
+
+const getCurrentYearMonth = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const getLastYearMonth = () => {
+  const now = new Date();
+  now.setMonth(now.getMonth() - 1);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const formatMonthLabel = (yearMonthStr: string) => {
+  if (!yearMonthStr) return '';
+  const parts = yearMonthStr.split('-');
+  if (parts.length !== 2) return yearMonthStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  if (isNaN(year) || isNaN(month)) return yearMonthStr;
+  const date = new Date(year, month - 1, 1);
+  return date.toLocaleString('default', { month: 'long', year: 'numeric' });
 };
 
 interface Booking {
@@ -62,10 +87,19 @@ export default function ReportsPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [bookingDate, setBookingDate] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [monthType, setMonthType] = useState<'event' | 'booking'>('booking');
+  const [filterPreset, setFilterPreset] = useState<'all' | 'this_month_booked' | 'this_month_events' | 'custom'>('all');
   const [showFilters, setShowFilters] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const fetchReports = async () => {
+  const fetchReports = async (
+    overrideMonth?: string,
+    overrideMonthType?: 'event' | 'booking',
+    overrideFrom?: string,
+    overrideTo?: string,
+    overrideBookingDate?: string
+  ) => {
     setLoading(true);
     const token = getToken();
     if (!token || !API_URL) {
@@ -73,11 +107,21 @@ export default function ReportsPage() {
       return;
     }
 
+    const mVal = overrideMonth !== undefined ? overrideMonth : selectedMonth;
+    const mType = overrideMonthType !== undefined ? overrideMonthType : monthType;
+    const fDate = overrideFrom !== undefined ? overrideFrom : fromDate;
+    const tDate = overrideTo !== undefined ? overrideTo : toDate;
+    const bDate = overrideBookingDate !== undefined ? overrideBookingDate : bookingDate;
+
     try {
       const params = new URLSearchParams();
-      if (fromDate) params.append("fromDate", fromDate);
-      if (toDate) params.append("toDate", toDate);
-      if (bookingDate) params.append("bookingDate", bookingDate);
+      if (mVal) {
+        params.append("month", mVal);
+        params.append("monthType", mType);
+      }
+      if (fDate) params.append("fromDate", fDate);
+      if (tDate) params.append("toDate", tDate);
+      if (bDate) params.append("bookingDate", bDate);
 
       const res = await fetch(`${API_URL}/bookings/reports?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -99,18 +143,52 @@ export default function ReportsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleThisMonthBookedList = () => {
+    const current = getCurrentYearMonth();
+    setSelectedMonth(current);
+    setMonthType('booking');
+    setFromDate('');
+    setToDate('');
+    setBookingDate('');
+    setFilterPreset('this_month_booked');
+    fetchReports(current, 'booking', '', '', '');
+  };
+
+  const handleThisMonthEvents = () => {
+    const current = getCurrentYearMonth();
+    setSelectedMonth(current);
+    setMonthType('event');
+    setFromDate('');
+    setToDate('');
+    setBookingDate('');
+    setFilterPreset('this_month_events');
+    fetchReports(current, 'event', '', '', '');
+  };
+
   const handleApplyFilters = () => {
+    setFilterPreset('custom');
     fetchReports();
     setShowFilters(false);
   };
 
   const handleClearFilters = () => {
-    setFromDate("");
-    setToDate("");
-    setBookingDate("");
-    fetchReports();
+    setSelectedMonth('');
+    setMonthType('booking');
+    setFromDate('');
+    setToDate('');
+    setBookingDate('');
+    setFilterPreset('all');
+    fetchReports('', 'booking', '', '', '');
     setShowFilters(false);
   };
+
+  const filterDescription = selectedMonth
+    ? `Month: ${formatMonthLabel(selectedMonth)} (${monthType === 'booking' ? 'Booked List' : 'Events List'})`
+    : fromDate || toDate
+      ? `Date Range: ${fromDate ? formatDateDMY(fromDate) : 'All'} - ${toDate ? formatDateDMY(toDate) : 'Present'}`
+      : bookingDate
+        ? `Booking Date: ${formatDateDMY(bookingDate)}`
+        : 'All Bookings';
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -200,8 +278,8 @@ export default function ReportsPage() {
           <div class="header">
             <h1>TM MAHAL</h1>
             <p>Event Booking Report</p>
-            <p style="margin-top: 5px;">
-              ${fromDate || toDate ? `Date Range: ${fromDate ? formatDateDMY(fromDate) : 'All'} - ${toDate ? formatDateDMY(toDate) : 'Present'}` : 'All Bookings'}
+            <p style="margin-top: 5px; font-weight: bold; color: #1e40af;">
+              ${filterDescription}
             </p>
             <p style="margin-top: 3px; color: #888;">Generated on: ${new Date().toLocaleString()}</p>
           </div>
@@ -305,7 +383,8 @@ export default function ReportsPage() {
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `booking-report-${new Date().toISOString().split("T")[0]}.csv`;
+    const filterTag = selectedMonth ? `${selectedMonth}-${monthType}` : 'report';
+    link.download = `booking-report-${filterTag}-${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
   };
 
@@ -435,24 +514,26 @@ export default function ReportsPage() {
     );
   }
 
+  const isFilterActive = Boolean(selectedMonth || fromDate || toDate || bookingDate);
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Reports</h1>
-          <p className="text-gray-500 text-sm mt-1">View and analyze booking data with interactive charts and advanced filters</p>
+          <p className="text-gray-500 text-sm mt-1">View and analyze booking data with interactive charts and monthly filters</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm border ${showFilters
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all shadow-sm border ${showFilters || isFilterActive
               ? 'bg-blue-50 border-blue-200 text-blue-700'
               : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
               }`}
           >
             <FiFilter className="w-4 h-4" />
-            Filters
+            Filters {isFilterActive && <span className="w-2 h-2 rounded-full bg-blue-600"></span>}
           </button>
           <button
             onClick={handlePrint}
@@ -471,54 +552,210 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* Quick Filter Presets Bar */}
+      <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
+        <span className="text-xs font-bold uppercase tracking-wider text-gray-400 px-2 flex items-center gap-1.5">
+          <FiFilter className="w-3.5 h-3.5" /> Quick Presets:
+        </span>
+
+        <button
+          onClick={handleThisMonthBookedList}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filterPreset === 'this_month_booked'
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-200 ring-2 ring-blue-500/20'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+        >
+          <FiCalendar className="w-3.5 h-3.5" />
+          This Month Booked List
+        </button>
+
+        <button
+          onClick={handleThisMonthEvents}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${filterPreset === 'this_month_events'
+            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-200 ring-2 ring-blue-500/20'
+            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+        >
+          <FiCalendar className="w-3.5 h-3.5" />
+          This Month Events
+        </button>
+
+        <button
+          onClick={handleClearFilters}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${filterPreset === 'all' && !isFilterActive
+            ? 'bg-gray-900 text-white shadow-sm'
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+        >
+          All Time
+        </button>
+      </div>
+
+      {/* Active Filter Context Banner */}
+      {isFilterActive && (
+        <div className="bg-blue-50/90 border border-blue-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs text-blue-900 shadow-sm animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <span className="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold text-[10px] tracking-wider uppercase">
+              ACTIVE FILTER
+            </span>
+            <span className="font-semibold text-blue-950">
+              {selectedMonth ? (
+                <>
+                  Filtering by {monthType === 'booking' ? 'Bookings Created in' : 'Events in'} <strong className="font-bold underline">{formatMonthLabel(selectedMonth)}</strong>
+                </>
+              ) : (
+                <>
+                  {fromDate || toDate ? `Event Date: ${fromDate ? formatDateDMY(fromDate) : 'All'} to ${toDate ? formatDateDMY(toDate) : 'Present'}` : ''}
+                  {bookingDate ? `${fromDate || toDate ? ' • ' : ''}Booking Date: ${formatDateDMY(bookingDate)}` : ''}
+                </>
+              )}
+              {data?.bookings ? ` (${data.bookings.length} ${data.bookings.length === 1 ? 'booking' : 'bookings'} found)` : ''}
+            </span>
+          </div>
+          <button
+            onClick={handleClearFilters}
+            className="flex items-center gap-1 font-bold text-blue-700 hover:text-blue-900 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <FiX className="w-3.5 h-3.5" /> Clear Filter
+          </button>
+        </div>
+      )}
+
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm animate-in slide-in-from-top-2">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiCalendar className="text-blue-600" />
-            Date Filters
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From Date (Event)</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
-              />
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-5 animate-in slide-in-from-top-2">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+              <FiCalendar className="text-blue-600" />
+              Advanced Filters
+            </h3>
+            <button
+              onClick={() => setShowFilters(false)}
+              className="text-xs font-semibold text-gray-400 hover:text-gray-600"
+            >
+              Close
+            </button>
+          </div>
+
+          {/* Monthly Wise Filter Section */}
+          <div className="bg-gradient-to-r from-blue-50/80 to-indigo-50/80 rounded-xl p-4 border border-blue-100 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-xs font-extrabold uppercase text-blue-900 tracking-wider flex items-center gap-1.5">
+                <FiCalendar className="w-4 h-4 text-blue-600" /> Monthly Wise Filter
+              </label>
+              <div className="flex items-center gap-3 text-xs font-bold text-blue-600">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = getCurrentYearMonth();
+                    setSelectedMonth(current);
+                  }}
+                  className="hover:underline"
+                >
+                  This Month
+                </button>
+                <span className="text-gray-300">•</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const last = getLastYearMonth();
+                    setSelectedMonth(last);
+                  }}
+                  className="hover:underline"
+                >
+                  Last Month
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To Date (Event)</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Booking Date</label>
-              <input
-                type="date"
-                value={bookingDate}
-                onChange={(e) => setBookingDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Select Month</label>
+                <input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => {
+                    setSelectedMonth(e.target.value);
+                    if (e.target.value) {
+                      setFromDate('');
+                      setToDate('');
+                      setBookingDate('');
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Filter Target</label>
+                <select
+                  value={monthType}
+                  onChange={(e) => setMonthType(e.target.value as 'event' | 'booking')}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none bg-white font-medium"
+                >
+                  <option value="booking">Booked Created Date (This Month Booked List)</option>
+                  <option value="event">Event Date (Events List)</option>
+                </select>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2 mt-4">
+
+          {/* Date Range Section */}
+          <div className="space-y-2">
+            <label className="text-xs font-extrabold uppercase text-gray-400 tracking-wider">
+              Specific Date Filters
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">From Date (Event)</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => {
+                    setFromDate(e.target.value);
+                    if (e.target.value) setSelectedMonth('');
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">To Date (Event)</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => {
+                    setToDate(e.target.value);
+                    if (e.target.value) setSelectedMonth('');
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Booking Creation Date</label>
+                <input
+                  type="date"
+                  value={bookingDate}
+                  onChange={(e) => {
+                    setBookingDate(e.target.value);
+                    if (e.target.value) setSelectedMonth('');
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2 border-t border-gray-100">
             <button
               onClick={handleApplyFilters}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-sm transition-all shadow-sm"
             >
               Apply Filters
             </button>
             <button
               onClick={handleClearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+              className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-semibold text-sm transition-all"
             >
-              Clear
+              Clear All
             </button>
           </div>
         </div>
@@ -579,7 +816,7 @@ export default function ReportsPage() {
           {data.charts.monthly.length > 0 && (
             <BarChart
               data={data.charts.monthly}
-              label="Monthly Bookings"
+              label="Monthly Breakdown"
               valueKey="count"
               nameKey="month"
             />
@@ -605,10 +842,14 @@ export default function ReportsPage() {
 
       {/* Data Table / Mobile Cards */}
       <div ref={printRef} className="space-y-4">
-        <div className="bg-transparent md:bg-white rounded-2xl overflow-hidden">
-          <div className="md:p-6 p-2 border-b border-gray-100 bg-gray-50/30">
-            <h3 className="font-bold text-gray-800">Booking Details</h3>
-            <p className="text-sm text-gray-500">Complete transaction history ordered by Event Date</p>
+        <div className="bg-transparent md:bg-white rounded-2xl overflow-hidden border border-gray-200/80 shadow-sm">
+          <div className="md:p-6 p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <div>
+              <h3 className="font-bold text-gray-800 text-base">Booking Details</h3>
+              <p className="text-xs text-gray-500">
+                {filterDescription} • Showing {data?.bookings.length || 0} items
+              </p>
+            </div>
           </div>
 
           {/* Desktop Table View */}
@@ -693,7 +934,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Mobile Card View */}
-          <div className="lg:hidden flex flex-col gap-2">
+          <div className="lg:hidden flex flex-col gap-2 p-2">
             {data?.bookings.length === 0 && (
               <div className="py-12 text-center text-gray-400">
                 <FiCalendar className="w-10 h-10 mx-auto opacity-20 mb-3" />
@@ -701,7 +942,7 @@ export default function ReportsPage() {
               </div>
             )}
             {data?.bookings.map((booking) => (
-              <div key={booking.id} className="p-4 bg-white hover:bg-gray-50/50 transition-colors rounded-md">
+              <div key={booking.id} className="p-4 bg-white border border-gray-100 hover:bg-gray-50/50 transition-colors rounded-xl shadow-sm">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="text-sm font-bold text-gray-900 mb-0.5">
@@ -741,13 +982,13 @@ export default function ReportsPage() {
                       <span className="font-semibold">Phone:</span> {booking.phone || booking.customer_phone || '-'}
                     </p>
                     {cleanRemarks(booking.remarks, booking.details, booking.notes) && (
-                      <p className="text-xs text-gray-500 italic truncate italic">
+                      <p className="text-xs text-gray-500 italic truncate">
                         &quot;{cleanRemarks(booking.remarks, booking.details, booking.notes)}&quot;
                       </p>
                     )}
                   </div>
                   <button
-                    className="flex-shrink-0 p-2 text-red-500 bg-red-50 rounded-lg"
+                    className="flex-shrink-0 p-2 text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                     onClick={() => {
                       if (!window.confirm('Delete this booking?')) return;
                       deleteBooking(String(booking.id), getToken()!).then(() => fetchReports());
