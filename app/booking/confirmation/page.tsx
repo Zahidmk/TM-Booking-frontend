@@ -167,6 +167,8 @@ export default function BookingConfirmationPage() {
           <div className="text-black font-medium">{personal.phone1 || '-'}</div>
 
 
+          <div className="text-gray-600">Booking Date</div>
+          <div className="text-black font-medium">{formatDateDMY(new Date())}</div>
           <div className="text-gray-600">Date</div>
           <div className="text-black font-medium">{slot.date ? formatDateDMY(slot.date as string) : '-'}</div>
           <div className="text-gray-600">Time Slot</div>
