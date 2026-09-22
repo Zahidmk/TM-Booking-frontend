@@ -167,18 +167,20 @@ export default function BookingConfirmationPage() {
           <div className="text-black font-medium">{personal.phone1 || '-'}</div>
 
 
-          <div className="text-gray-600">Booking Date</div>
-          <div className="text-black font-medium">{formatDateDMY(new Date())}</div>
-          <div className="text-gray-600">Date</div>
+
+          <div className="text-gray-600">Event Date</div>
           <div className="text-black font-medium">{slot.date ? formatDateDMY(slot.date as string) : '-'}</div>
           <div className="text-gray-600">Time Slot</div>
           <div className="text-black font-medium">{timeSlotLabel}</div>
           <div className="text-gray-600">Total Amount</div>
           <div className="text-black font-medium">₹{totalAmount ? totalAmount.toLocaleString() : '-'}</div>
           <div className="text-gray-600">Received Amount</div>
-          <div className="text-black font-medium">{payment.paymentType === 'advance' ? `₹${payment.advanceAmount || '-'}` : payment.paymentType === 'full' ? 'Full Payment' : '-'}</div>
+          <div className="text-black font-medium">{payment.paymentType === 'advance' ? `₹${payment.advanceAmount ? parseFloat(payment.advanceAmount).toLocaleString() : '-'}` : payment.paymentType === 'full' ? 'Full Payment' : '-'}</div>
           <div className="text-gray-600">Balance Amount</div>
           <div className="text-black font-medium">₹{typeof totalAmount === 'number' && payment.advanceAmount ? (totalAmount - (parseFloat(payment.advanceAmount) || 0)).toLocaleString() : '0'}</div>
+          <div className="text-gray-600">Booking Date</div>
+          <div className="text-black font-medium">{formatDateDMY(new Date())}</div>
+
         </div>
       </div>
 
