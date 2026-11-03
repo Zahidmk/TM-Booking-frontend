@@ -900,10 +900,10 @@ export default function ReportsPage() {
                     </td>
                     <td className="py-4 px-6 text-gray-700 whitespace-nowrap">{booking.customer_name || booking.name || '-'}</td>
                     <td className="py-4 px-6 text-gray-700 font-medium whitespace-nowrap">{booking.phone || booking.customer_phone || '-'}</td>
-                    <td className="py-4 px-6 text-right text-gray-900 font-bold whitespace-nowrap">
                     <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
                       {booking.date ? formatDateDMY(booking.date) : '-'}
                     </td>
+                    <td className="py-4 px-6 text-right text-gray-900 font-bold whitespace-nowrap">
                       ₹{(parseFloat(String(booking.total_amount)) || 0).toLocaleString()}
                     </td>
                     <td className="py-4 px-6 text-center whitespace-nowrap">
