@@ -318,9 +318,9 @@ export default function ReportsPage() {
             <thead>
               <tr>
                 <th>Booked Date</th>
-                <th>Event Date</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
+                <th>Event Date</th>
                 <th class="text-right">Total Amt</th>
                 <th class="text-center">Night</th>
                 <th class="text-right">Advance</th>
@@ -332,9 +332,9 @@ export default function ReportsPage() {
               ${data?.bookings.map(b => `
                 <tr>
                   <td>${b.created_at ? formatDateDMY(b.created_at) : '-'}</td>
-                  <td>${b.date ? formatDateDMY(b.date) : '-'}</td>
                   <td>${b.customer_name || b.name || '-'}</td>
                   <td>${b.phone || b.customer_phone || '-'}</td>
+                  <td>${b.date ? formatDateDMY(b.date) : '-'}</td>
                   <td class="text-right">₹${(parseFloat(String(b.total_amount)) || 0).toLocaleString()}</td>
                   <td class="text-center">${b.night || 'No'}</td>
                   <td class="text-right">₹${(parseFloat(String(b.advance_amount)) || 0).toLocaleString()}</td>
@@ -366,9 +366,9 @@ export default function ReportsPage() {
 
     const headers = [
       "Booked Date",
-      "Event Date",
       "Customer Name",
       "Phone",
+      "Event Date",
       "Total Amount",
       "Night",
       "Advance Amount",
@@ -378,9 +378,9 @@ export default function ReportsPage() {
 
     const rows = data.bookings.map(b => [
       b.created_at ? formatDateDMY(b.created_at) : "",
-      b.date ? formatDateDMY(b.date) : "",
       b.customer_name || b.name || "",
       b.phone || b.customer_phone || "",
+      b.date ? formatDateDMY(b.date) : "",
       parseFloat(String(b.total_amount)) || 0,
       b.night || "No",
       parseFloat(String(b.advance_amount)) || 0,
@@ -871,9 +871,9 @@ export default function ReportsPage() {
               <thead className="bg-gray-50 sticky top-0 z-20 shadow-sm">
                 <tr>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Booked Date</th>
-                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Event Date</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Customer</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Phone</th>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Event Date</th>
                   <th className="py-4 px-6 text-right font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Total Amt</th>
                   <th className="py-4 px-6 text-center font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Night</th>
                   <th className="py-4 px-6 text-right font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Advance</th>
@@ -898,12 +898,12 @@ export default function ReportsPage() {
                     <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
                       {booking.created_at ? formatDateDMY(booking.created_at) : '-'}
                     </td>
-                    <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
-                      {booking.date ? formatDateDMY(booking.date) : '-'}
-                    </td>
                     <td className="py-4 px-6 text-gray-700 whitespace-nowrap">{booking.customer_name || booking.name || '-'}</td>
                     <td className="py-4 px-6 text-gray-700 font-medium whitespace-nowrap">{booking.phone || booking.customer_phone || '-'}</td>
                     <td className="py-4 px-6 text-right text-gray-900 font-bold whitespace-nowrap">
+                    <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
+                      {booking.date ? formatDateDMY(booking.date) : '-'}
+                    </td>
                       ₹{(parseFloat(String(booking.total_amount)) || 0).toLocaleString()}
                     </td>
                     <td className="py-4 px-6 text-center whitespace-nowrap">
