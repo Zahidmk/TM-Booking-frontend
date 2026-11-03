@@ -129,6 +129,15 @@ export default function ReportsPage() {
 
       if (res.ok) {
         const result = await res.json();
+        // Booked date (created_at) is the primary sort, except for the Events List
+        const byEvent = !!mVal && mType === 'event';
+        if (Array.isArray(result.bookings) && !byEvent) {
+          result.bookings.sort((a: Booking, b: Booking) => {
+            const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return ta - tb || a.id - b.id;
+          });
+        }
         setData(result);
       }
     } catch (err) {
@@ -308,6 +317,7 @@ export default function ReportsPage() {
           <table>
             <thead>
               <tr>
+                <th>Booked Date</th>
                 <th>Event Date</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
@@ -321,6 +331,7 @@ export default function ReportsPage() {
             <tbody>
               ${data?.bookings.map(b => `
                 <tr>
+                  <td>${b.created_at ? formatDateDMY(b.created_at) : '-'}</td>
                   <td>${b.date ? formatDateDMY(b.date) : '-'}</td>
                   <td>${b.customer_name || b.name || '-'}</td>
                   <td>${b.phone || b.customer_phone || '-'}</td>
@@ -330,7 +341,7 @@ export default function ReportsPage() {
                   <td class="text-right">₹${(b.balance_amount || 0).toLocaleString()}</td>
                   <td>${cleanRemarks(b.remarks, b.details, b.notes) || '-'}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="8" class="text-center">No bookings found</td></tr>'}
+              `).join('') || '<tr><td colspan="9" class="text-center">No bookings found</td></tr>'}
             </tbody>
           </table>
           
@@ -354,6 +365,7 @@ export default function ReportsPage() {
     if (!data?.bookings.length) return;
 
     const headers = [
+      "Booked Date",
       "Event Date",
       "Customer Name",
       "Phone",
@@ -365,6 +377,7 @@ export default function ReportsPage() {
     ];
 
     const rows = data.bookings.map(b => [
+      b.created_at ? formatDateDMY(b.created_at) : "",
       b.date ? formatDateDMY(b.date) : "",
       b.customer_name || b.name || "",
       b.phone || b.customer_phone || "",
@@ -857,6 +870,7 @@ export default function ReportsPage() {
             <table className="w-full text-sm border-separate border-spacing-0 min-w-[800px]">
               <thead className="bg-gray-50 sticky top-0 z-20 shadow-sm">
                 <tr>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Booked Date</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Event Date</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Customer</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Phone</th>
@@ -871,7 +885,7 @@ export default function ReportsPage() {
               <tbody className="divide-y divide-gray-100">
                 {data?.bookings.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="py-12 text-center text-gray-400">
+                    <td colSpan={10} className="py-12 text-center text-gray-400">
                       <div className="flex flex-col items-center gap-2">
                         <FiCalendar className="w-10 h-10 opacity-20" />
                         <p>No bookings found for the selected period.</p>
@@ -881,6 +895,9 @@ export default function ReportsPage() {
                 )}
                 {data?.bookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
+                      {booking.created_at ? formatDateDMY(booking.created_at) : '-'}
+                    </td>
                     <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
                       {booking.date ? formatDateDMY(booking.date) : '-'}
                     </td>
@@ -950,7 +967,8 @@ export default function ReportsPage() {
                     </p>
                     <p className="text-xs text-gray-500 font-medium flex items-center gap-1">
                       <FiCalendar className="w-3 h-3" />
-                      {booking.date ? formatDateDMY(booking.date) : '-'}
+                      Event: {booking.date ? formatDateDMY(booking.date) : '-'}
+                      {booking.created_at && <span className="ml-2">• Booked: {formatDateDMY(booking.created_at)}</span>}
                     </p>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${booking.night === 'Yes'
