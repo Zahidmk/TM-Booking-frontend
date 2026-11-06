@@ -84,15 +84,16 @@ export default function DeletedBookingsPage() {
       try {
         const data = await getDeletedBookings(token);
         if (Array.isArray(data)) {
-          // Calculate balance and sort by event date
+          // Calculate balance and sort by booked date
           const processedData = data.map((d: DeletedBooking) => ({
             ...d,
             balance_amount: (parseFloat(String(d.total_amount)) || 0) - (parseFloat(String(d.advance_amount)) || 0)
           }));
           processedData.sort((a: DeletedBooking, b: DeletedBooking) => {
-            const dateA = a.date ? new Date(a.date).getTime() : 0;
-            const dateB = b.date ? new Date(b.date).getTime() : 0;
-            return dateA - dateB;
+            // Latest booked date first
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return dateB - dateA || b.id - a.id;
           });
           setDeleted(processedData);
         } else {
@@ -418,7 +419,7 @@ export default function DeletedBookingsPage() {
         <div className="md:bg-white bg-transparent rounded-2xl overflow-hidden">
           <div className="md:p-6 p-2 border-b border-gray-100 bg-gray-50/30">
             <h3 className="font-bold text-gray-800">Deleted Logs</h3>
-            <p className="text-sm text-gray-500">History of deleted transactions ordered by Event Date</p>
+            <p className="text-sm text-gray-500">History of deleted transactions, latest booked first</p>
           </div>
 
           {/* Desktop Table View */}
