@@ -129,9 +129,8 @@ export default function ReportsPage() {
 
       if (res.ok) {
         const result = await res.json();
-        // Booked date (created_at) is the primary sort (latest first), except for the Events List
-        const byEvent = !!mVal && mType === 'event';
-        if (Array.isArray(result.bookings) && !byEvent) {
+        // Latest booked date (created_at) first, for every view
+        if (Array.isArray(result.bookings)) {
           result.bookings.sort((a: Booking, b: Booking) => {
             const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
             const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
