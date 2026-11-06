@@ -129,13 +129,13 @@ export default function ReportsPage() {
 
       if (res.ok) {
         const result = await res.json();
-        // Booked date (created_at) is the primary sort, except for the Events List
+        // Booked date (created_at) is the primary sort (latest first), except for the Events List
         const byEvent = !!mVal && mType === 'event';
         if (Array.isArray(result.bookings) && !byEvent) {
           result.bookings.sort((a: Booking, b: Booking) => {
             const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
             const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return ta - tb || a.id - b.id;
+            return tb - ta || b.id - a.id;
           });
         }
         setData(result);
