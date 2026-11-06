@@ -223,6 +223,7 @@ export default function DeletedBookingsPage() {
           <table>
             <thead>
               <tr>
+                <th>Booked Date</th>
                 <th>Event Date</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
@@ -239,6 +240,7 @@ export default function DeletedBookingsPage() {
             <tbody>
               ${filteredBookings.map(b => `
                 <tr>
+                  <td>${b.created_at ? formatDateDMY(b.created_at) : '-'}</td>
                   <td>${b.date ? formatDateDMY(b.date) : '-'}</td>
                   <td>${b.customer_name || b.name || '-'}</td>
                   <td>${b.phone || b.customer_phone || '-'}</td>
@@ -251,7 +253,7 @@ export default function DeletedBookingsPage() {
                   <td>${cleanRemarks(b.remarks, b.details, b.notes) || '-'}</td>
                   <td>${b.deleted_at ? formatDateDMY(b.deleted_at) : '-'}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="11" class="text-center">No deleted bookings found</td></tr>'}
+              `).join('') || '<tr><td colspan="12" class="text-center">No deleted bookings found</td></tr>'}
             </tbody>
           </table>
           
@@ -275,6 +277,7 @@ export default function DeletedBookingsPage() {
     if (!filteredBookings.length) return;
 
     const headers = [
+      "Booked Date",
       "Event Date",
       "Customer Name",
       "Phone",
@@ -289,6 +292,7 @@ export default function DeletedBookingsPage() {
     ];
 
     const rows = filteredBookings.map(b => [
+      b.created_at ? formatDateDMY(b.created_at) : "",
       b.date ? formatDateDMY(b.date) : "",
       b.customer_name || b.name || "",
       b.phone || b.customer_phone || "",
@@ -422,6 +426,7 @@ export default function DeletedBookingsPage() {
             <table className="w-full text-sm border-separate border-spacing-0 min-w-[800px]">
               <thead className="bg-gray-50 sticky top-0 z-20 shadow-sm">
                 <tr>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Booked Date</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Event Date</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Customer</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Phone</th>
@@ -437,7 +442,7 @@ export default function DeletedBookingsPage() {
               <tbody className="divide-y divide-gray-100">
                 {filteredBookings.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="py-12 text-center text-gray-400">
+                    <td colSpan={10} className="py-12 text-center text-gray-400">
                       <div className="flex flex-col items-center gap-2">
                         <FiCalendar className="w-10 h-10 opacity-20" />
                         <p>No deleted bookings found.</p>
@@ -447,6 +452,9 @@ export default function DeletedBookingsPage() {
                 )}
                 {filteredBookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
+                      {booking.created_at ? formatDateDMY(booking.created_at) : '-'}
+                    </td>
                     <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
                       {booking.date ? formatDateDMY(booking.date) : '-'}
                     </td>
@@ -512,7 +520,8 @@ export default function DeletedBookingsPage() {
                     </p>
                     <p className="text-xs text-gray-500 font-medium flex items-center gap-1">
                       <FiCalendar className="w-3 h-3" />
-                      {booking.date ? formatDateDMY(booking.date) : '-'}
+                      Event: {booking.date ? formatDateDMY(booking.date) : '-'}
+                      {booking.created_at && <span className="ml-2">• Booked: {formatDateDMY(booking.created_at)}</span>}
                     </p>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700">
