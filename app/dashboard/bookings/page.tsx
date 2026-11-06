@@ -104,11 +104,11 @@ export default function BookingsPage() {
             ...b,
             balance_amount: (parseFloat(String(b.total_amount)) || 0) - (parseFloat(String(b.advance_amount)) || 0)
           }));
-          // Sort by event date
+          // Sort by booked date (latest first)
           bookingsWithBalance.sort((a: Booking, b: Booking) => {
-            const dateA = a.date ? new Date(a.date).getTime() : 0;
-            const dateB = b.date ? new Date(b.date).getTime() : 0;
-            return dateA - dateB;
+            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return dateB - dateA || b.id - a.id;
           });
           setBookings(bookingsWithBalance);
         } else {
@@ -169,9 +169,9 @@ export default function BookingsPage() {
           balance_amount: (parseFloat(String(b.total_amount)) || 0) - (parseFloat(String(b.advance_amount)) || 0)
         }));
         bookingsWithBalance.sort((a: Booking, b: Booking) => {
-          const dateA = a.date ? new Date(a.date).getTime() : 0;
-          const dateB = b.date ? new Date(b.date).getTime() : 0;
-          return dateA - dateB;
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA || b.id - a.id;
         });
         setBookings(bookingsWithBalance);
       }
@@ -304,6 +304,7 @@ export default function BookingsPage() {
           <table>
             <thead>
               <tr>
+                <th>Booked Date</th>
                 <th>Event Date</th>
                 <th>Customer Name</th>
                 <th>Phone</th>
@@ -319,6 +320,7 @@ export default function BookingsPage() {
             <tbody>
               ${filteredBookings.map(b => `
                 <tr>
+                  <td>${b.created_at ? formatDateDMY(b.created_at) : '-'}</td>
                   <td>${b.date ? formatDateDMY(b.date) : '-'}</td>
                   <td>${b.customer_name || b.name || '-'}</td>
                   <td>${b.phone || b.customer_phone || '-'}</td>
@@ -330,7 +332,7 @@ export default function BookingsPage() {
                   <td class="text-right">${b.final_payment ? `₹${parseFloat(String(b.final_payment)).toLocaleString()}` : '-'}</td>
                   <td>${cleanRemarks(b.remarks, b.details, b.notes) || '-'}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="10" class="text-center">No bookings found</td></tr>'}
+              `).join('') || '<tr><td colspan="11" class="text-center">No bookings found</td></tr>'}
             </tbody>
           </table>
           
@@ -354,6 +356,7 @@ export default function BookingsPage() {
     if (!filteredBookings.length) return;
     
     const headers = [
+      "Booked Date",
       "Event Date",
       "Customer Name",
       "Phone",
@@ -367,6 +370,7 @@ export default function BookingsPage() {
     ];
     
     const rows = filteredBookings.map(b => [
+      b.created_at ? formatDateDMY(b.created_at) : "",
       b.date ? formatDateDMY(b.date) : "",
       b.customer_name || b.name || "",
       b.phone || b.customer_phone || "",
@@ -547,7 +551,7 @@ export default function BookingsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Event Log</h1>
-          <p className="text-gray-500 text-sm mt-1">View and manage all bookings ordered by event date</p>
+          <p className="text-gray-500 text-sm mt-1">View and manage all bookings latest booked first</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -657,6 +661,10 @@ export default function BookingsPage() {
             {/* Details grid */}
             <div className="grid grid-cols-2 gap-2 text-sm mb-3">
               <div>
+                <span className="text-gray-500">Booked Date</span>
+                <div className="font-medium text-gray-900">{b.created_at ? formatDateDMY(b.created_at) : '-'}</div>
+              </div>
+              <div>
                 <span className="text-gray-500">Event Date</span>
                 <div className="font-medium text-gray-900">{b.date ? formatDateDMY(b.date) : '-'}</div>
               </div>
@@ -709,12 +717,13 @@ export default function BookingsPage() {
       <div ref={printRef} className="bg-white rounded-xl border border-gray-200 overflow-hidden hidden md:block">
         <div className="p-4 border-b border-gray-200">
           <h3 className="font-semibold text-gray-800">Booking Details</h3>
-          <p className="text-sm text-gray-500">Ordered by Event Date • {filteredBookings.length} bookings</p>
+          <p className="text-sm text-gray-500">Latest booked first • {filteredBookings.length} bookings</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
+                <th className="py-3 px-4 text-left font-semibold text-gray-700">Booked Date</th>
                 <th className="py-3 px-4 text-left font-semibold text-gray-700">Event Date</th>
                 <th className="py-3 px-4 text-left font-semibold text-gray-700">Customer Name</th>
                 <th className="py-3 px-4 text-left font-semibold text-gray-700">Phone</th>
@@ -731,13 +740,16 @@ export default function BookingsPage() {
             <tbody className="divide-y divide-gray-100">
               {filteredBookings.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="py-8 text-center text-gray-400">
+                  <td colSpan={12} className="py-8 text-center text-gray-400">
                     No bookings found. Adjust your filters or create new bookings.
                   </td>
                 </tr>
               )}
               {filteredBookings.map((booking) => (
                 <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="py-3 px-4 text-gray-900 font-medium">
+                    {booking.created_at ? formatDateDMY(booking.created_at) : '-'}
+                  </td>
                   <td className="py-3 px-4 text-gray-900 font-medium">
                     {booking.date ? formatDateDMY(booking.date) : '-'}
                   </td>
