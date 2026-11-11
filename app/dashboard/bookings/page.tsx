@@ -104,11 +104,11 @@ export default function BookingsPage() {
             ...b,
             balance_amount: (parseFloat(String(b.total_amount)) || 0) - (parseFloat(String(b.advance_amount)) || 0)
           }));
-          // Sort by booked date (latest first)
+          // Sort by event date
           bookingsWithBalance.sort((a: Booking, b: Booking) => {
-            const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-            const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return dateB - dateA || b.id - a.id;
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateA - dateB;
           });
           setBookings(bookingsWithBalance);
         } else {
@@ -169,9 +169,9 @@ export default function BookingsPage() {
           balance_amount: (parseFloat(String(b.total_amount)) || 0) - (parseFloat(String(b.advance_amount)) || 0)
         }));
         bookingsWithBalance.sort((a: Booking, b: Booking) => {
-          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-          return dateB - dateA || b.id - a.id;
+          const dateA = a.date ? new Date(a.date).getTime() : 0;
+          const dateB = b.date ? new Date(b.date).getTime() : 0;
+          return dateA - dateB;
         });
         setBookings(bookingsWithBalance);
       }
@@ -551,7 +551,7 @@ export default function BookingsPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Event Log</h1>
-          <p className="text-gray-500 text-sm mt-1">View and manage all bookings latest booked first</p>
+          <p className="text-gray-500 text-sm mt-1">View and manage all bookings ordered by event date</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -717,7 +717,7 @@ export default function BookingsPage() {
       <div ref={printRef} className="bg-white rounded-xl border border-gray-200 overflow-hidden hidden md:block">
         <div className="p-4 border-b border-gray-200">
           <h3 className="font-semibold text-gray-800">Booking Details</h3>
-          <p className="text-sm text-gray-500">Latest booked first • {filteredBookings.length} bookings</p>
+          <p className="text-sm text-gray-500">Ordered by Event Date • {filteredBookings.length} bookings</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
