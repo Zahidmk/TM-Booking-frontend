@@ -129,12 +129,13 @@ export default function ReportsPage() {
 
       if (res.ok) {
         const result = await res.json();
-        // Latest booked date (created_at) first, for every view
+        // Booked-month filter: calendar order (oldest booked first). Other views: latest booked first.
+        const monthAsc = !!mVal && mType === 'booking';
         if (Array.isArray(result.bookings)) {
           result.bookings.sort((a: Booking, b: Booking) => {
             const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
             const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
-            return tb - ta || b.id - a.id;
+            return monthAsc ? ta - tb || a.id - b.id : tb - ta || b.id - a.id;
           });
         }
         setData(result);
